@@ -8,4 +8,5 @@ class Spree::SubscriptionsController < Spree::StoreController
     redirect_to account_url
   end
 
+
 end

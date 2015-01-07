@@ -8,3 +8,4 @@ class Spree::Admin::SubscriptionsController < Spree::Admin::ResourceController
       per(params[:per_page] || Spree::Config[:orders_per_page])
   end
 end
+``
