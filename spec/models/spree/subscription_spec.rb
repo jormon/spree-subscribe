@@ -4,7 +4,7 @@ describe Spree::Subscription do
 
   context "that is in 'cart' state" do
     before(:each) do
-      @sub = create :subscription
+      @sub = create(:subscription)
       @sub.line_item.order.reload
     end
 
@@ -62,8 +62,9 @@ describe Spree::Subscription do
   context "that is ready for reorder" do
     before(:each) do
       @sub = create(:subscription_for_reorder)
-      @sub.start
+      @sub.line_item.order.reload
       # DD: calling start will set date into future
+      @sub.start
       @sub.update_attribute(:reorder_on,Date.today)
     end
 
@@ -108,7 +109,7 @@ describe Spree::Subscription do
       order.shipments.count.should eq(1)
 
       s = order.shipments.first
-      expect(s.shipping_method).to eq @sub.shipping_method  # DD: should be same database record
+      expect(s.shipping_method.code).to eq @sub.shipping_method.code
     end
 
     it "should have a valid order with a payment method" do
@@ -153,6 +154,4 @@ describe Spree::Subscription do
       order.completed?.should be
     end
   end
-
 end
-

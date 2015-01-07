@@ -1,12 +1,8 @@
 require 'concerns/intervalable'
 
 class Spree::Subscription < ActiveRecord::Base
-  attr_accessible :reorder_on, :user_id, :times, :time_unit, :line_item_id, :billing_address_id, :state,
-    :shipping_address_id, :shipping_method_id, :payment_method_id, :source_id, :source_type
 
   include Intervalable
-
-  attr_accessor :new_order
 
   belongs_to :line_item, :class_name => "Spree::LineItem"
   belongs_to :billing_address, :foreign_key => :billing_address_id, :class_name => "Spree::Address"
@@ -20,6 +16,8 @@ class Spree::Subscription < ActiveRecord::Base
   has_many :reorders, :class_name => "Spree::Order"
 
   scope :active, where(:state => 'active')
+
+  attr_accessor :new_order
 
   state_machine :state, :initial => 'cart' do
     event :suspend do
@@ -40,13 +38,14 @@ class Spree::Subscription < ActiveRecord::Base
   def reorder
     raise false unless self.state == 'active'
 
-    create_reorder &&
-    add_subscribed_line_item &&
-    select_shipping &&
-    add_payment &&
-    confirm_reorder &&
-    complete_reorder &&
-    calculate_reorder_date!
+
+    create_reorder and
+        add_subscribed_line_item and
+        select_shipping and
+        add_payment and
+        confirm_reorder and
+        complete_reorder and
+        calculate_reorder_date!
   end
 
   def create_reorder
@@ -55,7 +54,7 @@ class Spree::Subscription < ActiveRecord::Base
         ship_address: self.shipping_address.clone,
         subscription_id: self.id,
         email: self.user.email
-      )
+    )
     self.new_order.user_id = self.user_id
 
     # DD: make it work with spree_multi_domain
@@ -63,7 +62,7 @@ class Spree::Subscription < ActiveRecord::Base
       self.new_order.store_id = self.line_item.order.store_id
     end
 
-    self.new_order.next # -> address
+    return true
   end
 
   def add_subscribed_line_item
@@ -73,7 +72,7 @@ class Spree::Subscription < ActiveRecord::Base
     line_item.price = self.line_item.price
     line_item.save!
 
-    self.new_order.next # -> delivery
+    self.new_order.next && self.new_order.next # -> address -> delivery
   end
 
   def select_shipping
@@ -125,13 +124,13 @@ class Spree::Subscription < ActiveRecord::Base
     # DD: TODO: set quantity?
     calculate_reorder_date!
     update_attributes(
-      :billing_address_id => order.bill_address_id,
-      :shipping_address_id => order.ship_address_id,
-      :shipping_method_id => order.shipping_method_for_variant( self.line_item.variant ).id,
-      :payment_method_id => order.payments.first.payment_method_id,
-      :source_id => order.payments.first.source_id,
-      :source_type => order.payments.first.source_type,
-      :user_id => order.user_id
+        :billing_address_id => order.bill_address_id,
+        :shipping_address_id => order.ship_address_id,
+        :shipping_method_id => order.shipping_method_for_variant( self.line_item.variant ).id,
+        :payment_method_id => order.payments.first.payment_method_id,
+        :source_id => order.payments.first.source_id,
+        :source_type => order.payments.first.source_type,
+        :user_id => order.user_id
     )
   end
 

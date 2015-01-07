@@ -1,0 +1,1 @@
+//= require intervals_autocomplete

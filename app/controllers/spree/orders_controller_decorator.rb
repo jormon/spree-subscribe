@@ -8,6 +8,14 @@ Spree::OrdersController.class_eval do
   def check_subscriptions
     return unless params[:subscriptions] && params[:subscriptions][:active].to_s == "1"
 
+    if params[:product_id]
+      add_subscription params[:product_id], params[:subscriptions][:interval_id]
+    end
+
+    if params[:variant_id]
+      add_subscription params[:variant_id], params[:subscriptions][:interval_id]
+    end
+
     params[:products].each do |product_id,variant_id|
       add_subscription variant_id, params[:subscriptions][:interval_id]
     end if params[:products]
