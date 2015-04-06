@@ -8,4 +8,9 @@ class Spree::Admin::SubscriptionIntervalsController < Spree::Admin::ResourceCont
       @intervals = Spree::SubscriptionInterval.limit(20).search(:name_cont => params[:q]).result
     end
   end
+
+  def subscription_interval_params
+    params.permit(:ids, :q)
+  end
+
 end

@@ -1,11 +1,11 @@
-class Spree::Admin::SubscriptionsController < Spree::Admin::ResourceController
+class Spree::SubscriptionsController < Spree::StoreController
+  rescue_from ActiveRecord::RecordNotFound, :with => :render_404
+  load_and_authorize_resource :class => Spree::Subscription
 
-  def index
-    # DD: stolen from Spree::Admin::OrdersController
-    @search = Spree::Subscription.ransack(params[:q])
-    @subscriptions = @search.result.includes([:user]).
-      page(params[:page]).
-      per(params[:per_page] || Spree::Config[:orders_per_page])
+  def destroy
+    @subscription.active? ? @subscription.suspend : @subscription.resume
+
+    redirect_to account_url
   end
+
 end
-``

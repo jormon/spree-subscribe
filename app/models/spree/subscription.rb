@@ -15,7 +15,11 @@ class Spree::Subscription < ActiveRecord::Base
 
   has_many :reorders, :class_name => "Spree::Order"
 
-  scope :active, where(:state => 'active')
+  scope :cart, -> { where(state: 'cart') }
+  scope :active, -> { where(state: 'active') }
+  scope :cancelled, -> { where(state: 'cancelled') }
+  scope :current, -> { where(state: ['active', 'inactive']) }
+  scope :due, -> { active.where("reorder_on <= ?", Date.today) }
 
   attr_accessor :new_order
 
@@ -34,35 +38,42 @@ class Spree::Subscription < ActiveRecord::Base
     after_transition :on => :resume, :do => :check_reorder_date
   end
 
+  def self.reorder_due!
+    due.each(&:reorder)
+  end
+
   # DD: TODO pull out into a ReorderBuilding someday
   def reorder
-    raise false unless self.state == 'active'
+    raise false unless active?
 
 
-    create_reorder and
-        add_subscribed_line_item and
+    result = create_reorder and
         select_shipping and
         add_payment and
         confirm_reorder and
         complete_reorder and
         calculate_reorder_date!
+
+    puts result ? " -> Next reorder date: #{self.reorder_on}" : " -> FAILED"
+
+    result
   end
 
   def create_reorder
+    puts "[SPREE::SUBSCRIPTION] Reordering subscription: #{id}"
+    puts " -> creating order..."
+
     self.new_order = Spree::Order.create(
         bill_address: self.billing_address.clone,
         ship_address: self.shipping_address.clone,
         subscription_id: self.id,
-        email: self.user.email
+        email: self.user.email,
+        user_id: self.user_id
     )
-    self.new_order.user_id = self.user_id
 
-    # DD: make it work with spree_multi_domain
-    if self.new_order.respond_to?(:store_id)
-      self.new_order.store_id = self.line_item.order.store_id
-    end
+    self.new_order.store_id = self.line_item.order.store_id if self.new_order.respond_to?(:store_id)
 
-    return true
+    add_subscribed_line_item and progress # -> delivery
   end
 
   def add_subscribed_line_item
@@ -72,11 +83,13 @@ class Spree::Subscription < ActiveRecord::Base
     line_item.price = self.line_item.price
     line_item.save!
 
-    self.new_order.next && self.new_order.next # -> address -> delivery
+    progress # -> delivery
   end
 
   def select_shipping
     # DD: shipments are created when order state goes to "delivery"
+    puts " -> selecting shipping rate..."
+
     shipment = self.new_order.shipments.first # DD: there should be only one shipment
     rate = shipment.shipping_rates.first{|r| r.shipping_method.id == self.shipping_method.id }
     raise "No rate was found. TODO: Implement logic to select the cheapest rate." unless rate
@@ -85,21 +98,22 @@ class Spree::Subscription < ActiveRecord::Base
   end
 
   def add_payment
-    payment = self.new_order.payments.build( :amount => self.new_order.item_total )
+    puts " -> adding payment..."
+    payment = self.new_order.payments.build(amount: self.new_order.outstanding_balance)
     payment.source = self.source
     payment.payment_method = self.payment_method
     payment.save!
 
-    self.new_order.next # -> payment
+    progress # -> payment
   end
 
   def confirm_reorder
-    self.new_order.next # -> confirm
+    progress # -> confirm
   end
 
   def complete_reorder
     self.new_order.update!
-    self.new_order.next && self.new_order.save # -> complete
+    progress && self.new_order.save # -> complete
   end
 
   def calculate_reorder_date!
@@ -138,4 +152,15 @@ class Spree::Subscription < ActiveRecord::Base
     @reorder_states ||= state_machine.states.map(&:name) - ["cart"]
   end
 
+  def new_order_state
+    self.new_order.state
+  end
+
+  def progress
+    current_state = new_order_state
+    result = self.new_order.next
+    success = !!result && current_state != new_order_state
+    puts " !! Order progression failed. Status still '#{new_order_state}'" unless success
+    success
+  end
 end
