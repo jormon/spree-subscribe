@@ -1,6 +1,6 @@
 require 'concerns/intervalable'
 
-class Spree::Subscription < ActiveRecord::Base
+class Spree::Subscription < Spree::Base
 
   include Intervalable
 
