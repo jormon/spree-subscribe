@@ -1,7 +1,6 @@
 class CreateSpreeSubscriptions < ActiveRecord::Migration
   def change
     create_table :spree_subscriptions do |t|
-      t.references :line_item
       t.references :shipping_method
       t.references :billing_address
       t.references :shipping_address

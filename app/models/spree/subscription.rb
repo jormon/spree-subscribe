@@ -4,11 +4,10 @@ class Spree::Subscription < Spree::Base
 
   include Intervalable
 
-  belongs_to :line_item, :class_name => "Spree::LineItem"
+  has_many :line_items, :class_name => "Spree::LineItem"
   belongs_to :billing_address, :foreign_key => :billing_address_id, :class_name => "Spree::Address"
   belongs_to :shipping_address, :foreign_key => :shipping_address_id, :class_name => "Spree::Address"
   belongs_to :shipping_method
-  #belongs_to :interval, :class_name => "Spree::SubscriptionInterval"
   belongs_to :source, :polymorphic => true, :validate => true
   belongs_to :payment_method
   belongs_to :user, :class_name => Spree.user_class.to_s
@@ -73,17 +72,19 @@ class Spree::Subscription < Spree::Base
 
     self.new_order.store_id = self.line_item.order.store_id if self.new_order.respond_to?(:store_id)
 
-    add_subscribed_line_item and progress # -> delivery
+    add_subscribed_line_items and progress # -> delivery
   end
 
-  def add_subscribed_line_item
-    variant = Spree::Variant.find(self.line_item.variant_id)
+  def add_subscribed_line_items
+    self.line_items.each
+  end
 
-    line_item = self.new_order.contents.add( variant, self.line_item.quantity )
-    line_item.price = self.line_item.price
+  def add_subscribed_line_item(line_item_master)
+    variant = Spree::Variant.find(line_item_master.variant_id)
+
+    line_item = self.new_order.contents.add(variant, line_item_master.quantity )
+    line_item.price = line_item_master.price
     line_item.save!
-
-    progress # -> delivery
   end
 
   def select_shipping
@@ -134,13 +135,13 @@ class Spree::Subscription < Spree::Base
 
   # DD: assumes interval attributes come in when created/updated in cart
   def set_checkout_requirements
-    order = self.line_item.order
+    order = self.line_items.first.order
     # DD: TODO: set quantity?
     calculate_reorder_date!
     update_attributes(
         :billing_address_id => order.bill_address_id,
         :shipping_address_id => order.ship_address_id,
-        :shipping_method_id => order.shipping_method_for_variant( self.line_item.variant ).id,
+        # :shipping_method_id => order.shipping_method_for_variant( self.line_item.variant ).id,
         :payment_method_id => order.payments.first.payment_method_id,
         :source_id => order.payments.first.source_id,
         :source_type => order.payments.first.source_type,

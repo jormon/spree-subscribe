@@ -6,9 +6,10 @@ Spree::Order.class_eval do
   end
 
   def activate_subscriptions!
-    line_items.each do |line_item|
-      line_item.subscription.start if line_item.subscription
-    end
+    Rails.logger.warn "start the subscriptions!"
+    # line_items.each do |line_item|
+    #   line_item.subscription.start if line_item.subscription
+    # end
   end
 
   # DD: not unit tested
@@ -20,6 +21,4 @@ Spree::Order.class_eval do
   def shipping_method_for_variant(variant)
     shipment_for_variant(variant).shipping_method
   end
-
 end
-
