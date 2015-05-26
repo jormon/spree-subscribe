@@ -3,6 +3,9 @@
 
 en:
   subscribe:
+    subscription:
+      one: "Subscription"
+      other: "Subscriptions"
     users_show_title: "My Subscriptions"
     no_subscriptions_available: "You do not have any subscriptions set up."
     product: "Product"
