@@ -5,11 +5,13 @@
     <th><%= t(:price, scope: :subscribe) %></th>
   </thead>
   <tbody>
-    <% Array(@subscription.line_item).each do |line_item| %>
+    <% @subscription.line_items.each do |line_item| %>
       <tr>
         <td>
           <%= line_item.variant.name %>
-          <%= line_item.variant.options_text %>
+          <% unless line_item.variant.options_text.blank? %>
+            - <%= line_item.variant.options_text %>
+          <% end %>
         </td>
         <td><%= line_item.quantity %></td>
         <td><%= line_item.display_amount.to_html %></td>

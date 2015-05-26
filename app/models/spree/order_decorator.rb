@@ -17,11 +17,11 @@ Spree::Order.class_eval do
   # there may be orphaned subscriptions! delete the ones not referenced by the
   # line items of this order.
   def prune_subscriptions
-    exisiting_subscription_ids = Subscription.where(order: self).pluck :id
+    exisiting_subscription_ids = Spree::Subscription.where(order: self).pluck :id
     needed_ids = self.line_items.pluck(:subscription_id).uniq
     to_delete = exisiting_subscription_ids - needed_ids
 
     # kaboom!
-    Subscription.where(id: to_delete).destroy_all
+    Spree::Subscription.where(id: to_delete).destroy_all
   end
 end

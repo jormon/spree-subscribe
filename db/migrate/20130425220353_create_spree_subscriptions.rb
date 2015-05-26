@@ -18,6 +18,6 @@ class CreateSpreeSubscriptions < ActiveRecord::Migration
     # allows for fast lookups of subscriptions by order_id
     # enforces only one subscription per order per interval
     # interval is uniquely defined by times and times_unit
-    add_index :spree_subscriptions, [:order_id, :times, :times_unit], unique: true
+    add_index :spree_subscriptions, [:order_id, :times, :time_unit], unique: true
   end
 end

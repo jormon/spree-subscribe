@@ -5,7 +5,8 @@ Spree::LineItem.class_eval do
   # that is making a subscription necessary.  so when a line_item is destroyed,
   # tell the order to prune its subscriptions.
   after_destroy :prune_subscriptions
-  def prune_subscriptions(line_item)
-    line_item.order.prune_subscriptions
+
+  def prune_subscriptions
+    self.order.prune_subscriptions
   end
 end
