@@ -1,18 +1,23 @@
 require 'concerns/intervalable'
 
 class Spree::Subscription < Spree::Base
-
   include Intervalable
 
+  # this is the order object that *created* the subscription
+  belongs_to :order, :class_name => "Spree::Order"
+
+  # these are the order objects a subscription has spawned
+  has_many :reorders, :class_name => "Spree::Order"
+
+  # all of the items in the re-order
   has_many :line_items, :class_name => "Spree::LineItem"
+
   belongs_to :billing_address, :foreign_key => :billing_address_id, :class_name => "Spree::Address"
   belongs_to :shipping_address, :foreign_key => :shipping_address_id, :class_name => "Spree::Address"
   belongs_to :shipping_method
   belongs_to :source, :polymorphic => true, :validate => true
   belongs_to :payment_method
   belongs_to :user, :class_name => Spree.user_class.to_s
-
-  has_many :reorders, :class_name => "Spree::Order"
 
   scope :cart, -> { where(state: 'cart') }
   scope :active, -> { where(state: 'active') }
@@ -76,13 +81,15 @@ class Spree::Subscription < Spree::Base
   end
 
   def add_subscribed_line_items
-    self.line_items.each
+    self.line_items.each do |line_item|
+      add_subscribed_line_item line_item
+    end
   end
 
   def add_subscribed_line_item(line_item_master)
     variant = Spree::Variant.find(line_item_master.variant_id)
 
-    line_item = self.new_order.contents.add(variant, line_item_master.quantity )
+    line_item = self.new_order.contents.add(variant, line_item_master.quantity)
     line_item.price = line_item_master.price
     line_item.save!
   end
@@ -141,7 +148,7 @@ class Spree::Subscription < Spree::Base
     update_attributes(
         :billing_address_id => order.bill_address_id,
         :shipping_address_id => order.ship_address_id,
-        # :shipping_method_id => order.shipping_method_for_variant( self.line_item.variant ).id,
+        :shipping_method_id => order.shipments.first.shipping_method.id,
         :payment_method_id => order.payments.first.payment_method_id,
         :source_id => order.payments.first.source_id,
         :source_type => order.payments.first.source_type,

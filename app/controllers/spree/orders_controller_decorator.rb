@@ -28,6 +28,7 @@ Spree::OrdersController.class_eval do
   protected
 
   # DD: TODO write test for this method
+  # returns true/false
   def add_subscription(variant_id, interval_id)
     line_item = current_order.line_items.where(:variant_id => variant_id).first
     interval = Spree::SubscriptionInterval.find(interval_id)
@@ -37,16 +38,16 @@ Spree::OrdersController.class_eval do
       line_item.price = line_item.variant.subscribed_price
     end
 
-    # DD: create subscription
-    if line_item.subscription
-      line_item.subscription.update_attributes :times => interval.times, :time_unit => interval.time_unit
-    else
-      line_item.subscription = Spree::Subscription.create :times => interval.times, :time_unit => interval.time_unit
-    end
+    # orders may only have one subscription per interval
+    subscription = current_order.subscriptions.find_or_create_by \
+      times: interval.times,
+      time_unit: interval.time_unit
+
+    line_item.subscription = subscription
 
     line_item.save
 
-    line_item.subscription
+    # let's be explicit about what we're returning here
+    true
   end
-
 end
