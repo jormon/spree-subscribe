@@ -23,6 +23,9 @@ Spree::OrdersController.class_eval do
     params[:variants].each do |variant_id, quantity|
       add_subscription variant_id, params[:subscriptions][:interval_id]
     end if params[:variants]
+
+    # need to update the order so its total is accurate
+    current_order.updater.update
   end
 
   protected
