@@ -12,7 +12,7 @@
     <% else %>
       <%- # render just the name of the subscription we want %>
       <% interval = @product.subscription_intervals.first %>
-      <%= interval.name %>
+      <%= interval.name %>.
       <%= hidden_field_tag "subscriptions[interval_id]", interval.id %>
     <% end %>
     <% if @product.subscribed_price %>
