@@ -40,7 +40,7 @@
       <tr data-hook="admin_subscriptions_index_rows" class="state-<%= sub.state.downcase %> <%= cycle('odd', 'even') %>">
         <td class="subscription-user"><%= link_to sub.id, edit_admin_subscription_path(sub) %></td>
         <td class="subscription-user"><%= link_to sub.user.email, admin_user_path(sub.user) %></td>
-        <td class="subscription-price"><%= sub.line_items.map(&:display_amount).sum.to_html %></td>
+        <td class="subscription-price"><%= subscription_price(sub) %></td>
         <td class="subscription-interval"><%= sub.time_title %></td>
         <td class="subscription-reorder-date">
           <% if sub.active? %>

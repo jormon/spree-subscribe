@@ -2,6 +2,8 @@ class Spree::Admin::SubscriptionsController < Spree::Admin::ResourceController
   rescue_from ActiveRecord::RecordNotFound, :with => :render_404
   before_action :load_subscription, except: :index
 
+  helper "spree/subscriptions"
+
   def index
     @subscriptions = Spree::Subscription.
       page(params[:page]).
