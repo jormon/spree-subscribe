@@ -5,10 +5,9 @@ class Spree::Admin::SubscriptionsController < Spree::Admin::ResourceController
   helper "spree/subscriptions"
 
   def index
-    @subscriptions = Spree::Subscription.
+    @subscriptions = Spree::Subscription.where(state: [:active, :inactive]).
       page(params[:page]).
       per(params[:per_page] || Spree::Config[:orders_per_page])
-
   end
 
   def destroy
