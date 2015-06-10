@@ -77,7 +77,7 @@ class Spree::Subscription < Spree::Base
 
     self.new_order.store_id = self.line_items.first.order.store_id if self.new_order.respond_to?(:store_id)
 
-    add_subscribed_line_items and progress # -> delivery
+    add_subscribed_line_items and progress and progress # -> address -> delivery
   end
 
   def add_subscribed_line_items
