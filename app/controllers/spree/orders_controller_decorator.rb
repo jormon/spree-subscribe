@@ -1,5 +1,6 @@
 Spree::OrdersController.class_eval do
   after_filter :check_subscriptions, :only => [:populate]
+  helper "spree/subscriptions"
 
   protected
 
@@ -38,7 +39,7 @@ Spree::OrdersController.class_eval do
 
     # DD: set subscribed price
     if line_item.variant.subscribed_price.present?
-      line_item.price = line_item.variant.subscribed_price
+      line_item.price = subscribed_price_for_variant line_item.variant
     end
 
     # orders may only have one subscription per interval
@@ -52,5 +53,13 @@ Spree::OrdersController.class_eval do
 
     # let's be explicit about what we're returning here
     true
+  end
+
+  def subscribed_price_for_variant(variant)
+    if respond_to? :subscribed_price_for_variant_override
+      subscribed_price_for_variant_override variant
+    else
+      variant.subscribed_price
+    end
   end
 end

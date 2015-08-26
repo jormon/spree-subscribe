@@ -15,8 +15,8 @@
       <%= interval.name %>.
       <%= hidden_field_tag "subscriptions[interval_id]", interval.id %>
     <% end %>
-    <% if @product.subscribed_price %>
-      <% price_difference = Spree::Money.new(@product.price - @product.subscribed_price) %>
+    <% if @product.subscribed_price || @product.try(:wholesale_subscription_price) %>
+      <% price_difference = subscription_price_difference_for product: @product %>
       <span class="price-saved">You save <%= price_difference.to_html %>!</span>
     <% end %>
   </div>

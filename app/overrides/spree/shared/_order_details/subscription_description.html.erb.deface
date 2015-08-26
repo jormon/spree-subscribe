@@ -3,7 +3,7 @@
   <div class="subscription-callout" style="font-weight: bold;">
     Subscription: Deliver every <%= item.subscription.time_title %>.
 
-    <% price_difference = Spree::Money.new(item.variant.price - item.variant.subscribed_price) %>
+    <% price_difference = subscription_price_difference_for_line_item item %>
     <span class="price-saved">You save <%= price_difference.to_html %>!</span>
   </div>
 <% end %>
