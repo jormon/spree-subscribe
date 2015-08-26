@@ -4,10 +4,14 @@ Spree::OrdersController.class_eval do
 
   protected
 
+  def subscriptions_active?
+    params[:subscriptions] && params[:subscriptions][:active].to_s == "1"
+  end
+
   # DD: maybe use a format close to OrderPopulator (or move to or decorate there one day)
   # +:subscriptions => { variant_id => interval_id, variant_id => interval_id }
   def check_subscriptions
-    return unless params[:subscriptions] && params[:subscriptions][:active].to_s == "1"
+    return unless subscriptions_active?
 
     if params[:product_id]
       add_subscription params[:product_id], params[:subscriptions][:interval_id]
