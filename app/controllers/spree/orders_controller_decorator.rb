@@ -60,7 +60,8 @@ Spree::OrdersController.class_eval do
   end
 
   def subscribed_price_for_variant(variant)
-    if respond_to? :subscribed_price_for_variant_override
+    # pass true to check protected / private methods
+    if respond_to? :subscribed_price_for_variant_override, true
       subscribed_price_for_variant_override variant
     else
       variant.subscribed_price
