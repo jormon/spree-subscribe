@@ -50,7 +50,6 @@ class Spree::Subscription < Spree::Base
   def reorder
     raise false unless active?
 
-
     result = create_reorder and
         select_shipping and
         add_payment and
@@ -145,6 +144,21 @@ class Spree::Subscription < Spree::Base
     order = self.line_items.first.order
     # DD: TODO: set quantity?
     calculate_reorder_date!
+
+    # auto create user if nil
+    if order.user_id.nil?
+      user = Spree::User.create! \
+        email: order.email,
+        password: Devise.friendly_token,
+        bill_address_id: order.bill_address_id,
+        ship_address_id: order.ship_address_id
+      order.user_id = user.id
+      order.save!
+
+      # so order.user_id is accurate below
+      order.reload
+    end
+
     update_attributes(
         :billing_address_id => order.bill_address_id,
         :shipping_address_id => order.ship_address_id,
