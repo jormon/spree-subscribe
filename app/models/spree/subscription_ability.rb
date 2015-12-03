@@ -9,5 +9,11 @@ class Spree::SubscriptionAbility
     can :create, Spree::Subscription do |sub|
       sub.id.present?
     end
+
+    if user.respond_to?(:has_spree_role?) && user.has_spree_role?('admin')
+      can :admin, Spree::Subscription
+    else
+      cannot :admin, Spree::Subscription
+    end
   end
 end

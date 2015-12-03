@@ -9,5 +9,4 @@ Spree::Core::Engine.routes.draw do
   end
 
   resources :subscriptions, :only => [:destroy]
-
 end
