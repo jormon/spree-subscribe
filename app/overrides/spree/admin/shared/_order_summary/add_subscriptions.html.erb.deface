@@ -1,5 +1,13 @@
 <!-- insert_bottom "dl.additional-info" -->
 <% if @order.subscription %>
   <dt><%= Spree.t(:subscription, scope: :subscribe, count: 1) %>:</dt>
-  <dd><%= link_to @order.subscription.id, admin_subscription_url(@order.subscription) %></dd>
+  <dd><%= link_to @order.subscription.id, edit_admin_subscription_url(@order.subscription) %></dd>
+<% end %>
+<% if @order.subscriptions.count > 0 %>
+  <dt><%= Spree.t(:subscriptions_spawned, scope: :subscribe, count: @order.subscriptions.count) %>:</dt>
+  <dd>
+  <% @order.subscriptions.each do |spawned_subscription| %>
+      #<%= link_to spawned_subscription.id, edit_admin_subscription_url(spawned_subscription) %>
+  <% end %>
+  </dd>
 <% end %>
