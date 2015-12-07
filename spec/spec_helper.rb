@@ -18,6 +18,9 @@ require 'rspec/rails'
 require 'database_cleaner'
 require 'ffaker'
 
+# bring in the cancan matchers
+require "cancan/matchers"
+
 # Requires supporting ruby files with custom matchers and macros, etc,
 # in spec/support/ and its subdirectories.
 Dir[File.join(File.dirname(__FILE__), 'support/**/*.rb')].each { |f| require f }
@@ -40,6 +43,9 @@ Capybara.configure do |config|
 end
 
 RSpec.configure do |config|
+  # for now...
+  config.infer_spec_type_from_file_location!
+
   config.include FactoryGirl::Syntax::Methods
 
   # == URL Helpers
@@ -76,7 +82,7 @@ RSpec.configure do |config|
   end
 
   # Before each spec check if it is a Javascript test and switch between using database transactions or not where necessary.
-  config.before :each do
+  config.before :each do |example|
     DatabaseCleaner.strategy = example.metadata[:js] ? :truncation : :transaction
     DatabaseCleaner.start
   end

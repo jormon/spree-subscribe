@@ -20,7 +20,9 @@ class Spree::Admin::SubscriptionsController < Spree::Admin::ResourceController
 
   def load_subscription
     @subscription = Spree::Subscription.find_by_id! params[:id]
-    authorize! action, @subscription
   end
 
+  def model_class
+    Spree::Subscription
+  end
 end
