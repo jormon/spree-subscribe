@@ -159,13 +159,17 @@ class Spree::Subscription < Spree::Base
       order.reload
     end
 
+    payment = order.payments.detect do |payment|
+      payment.state == "completed"
+    end
+
     update_attributes(
         :billing_address_id => order.bill_address_id,
         :shipping_address_id => order.ship_address_id,
         :shipping_method_id => order.shipments.first.shipping_method.id,
-        :payment_method_id => order.payments.first.payment_method_id,
-        :source_id => order.payments.first.source_id,
-        :source_type => order.payments.first.source_type,
+        :payment_method_id => payment.payment_method_id,
+        :source_id => payment.source_id,
+        :source_type => payment.source_type,
         :user_id => order.user_id
     )
   end
@@ -182,7 +186,11 @@ class Spree::Subscription < Spree::Base
     current_state = new_order_state
     result = self.new_order.next
     success = !!result && current_state != new_order_state
-    puts " !! Order progression failed. Status still '#{new_order_state}'" unless success
+    unless success
+      puts " !! Order progression failed. Status still '#{new_order_state}'"
+      puts "New Order: #{new_order.id}"
+      puts "Errors: #{new_order.errors.messages}"
+    end
     success
   end
 end
