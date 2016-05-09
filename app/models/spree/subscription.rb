@@ -43,7 +43,15 @@ class Spree::Subscription < Spree::Base
   end
 
   def self.reorder_due!
-    due.each(&:reorder)
+    due.each do |subscription|
+      begin
+        subscription.reorder
+      rescue ActiveRecord::RecordInvalid => ex
+        Rails.logger.error \
+          "[SUBSCRIPTIONS] could not process subscription #{subscription.id}"
+        Airbrake.notify ex, subscription_id: subscription.id
+      end
+    end
   end
 
   # DD: TODO pull out into a ReorderBuilding someday
