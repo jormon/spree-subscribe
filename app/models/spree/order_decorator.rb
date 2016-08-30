@@ -10,6 +10,10 @@ Spree::Order.class_eval do
     after_transition :to => :complete, :do => :activate_subscriptions!
   end
 
+  def subscription?
+    subscription_id.present? || !subscriptions.empty?
+  end
+
   def activate_subscriptions!
     subscriptions.map(&:start)
   end
