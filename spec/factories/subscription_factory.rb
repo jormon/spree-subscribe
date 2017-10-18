@@ -3,6 +3,17 @@ FactoryGirl.define do
     times 3
     time_unit 3  # DD: 3 = months
 
+    trait :with_line_item do
+      transient do
+        line_item nil
+      end
+      # bind the line item to the subscription
+      after :create do |subscription, evaluator|
+        evaluator.with_line_item.subscription = subscription
+        evaluator.with_line_item.save!
+      end
+    end
+
     trait :activated do
       association :order, factory: :order_ready_to_ship
 

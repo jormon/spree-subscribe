@@ -2,8 +2,16 @@ require 'spec_helper'
 
 describe Spree::Subscription do
   context "validation" do
-    it "cannot make multiple subscriptions per orderXinterval"
-    it "has many line items"
+    it "cannot make multiple subscriptions per orderXinterval" do
+      order = create :order
+      subscription = create :subscription, order: order
+      expect(subscription).to be_valid
+      expect do
+        # create another subscription for the order with same factory-created
+        # times and times_unit
+        create :subscription, order: order
+      end.to raise_error ActiveRecord::RecordNotUnique
+    end
   end
 
 
