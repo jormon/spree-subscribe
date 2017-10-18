@@ -27,6 +27,5 @@ module Intervalable
     def time
       times.try( time_unit_symbol )
     end
-
   end
 end
