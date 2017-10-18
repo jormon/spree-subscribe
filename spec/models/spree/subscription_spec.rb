@@ -69,24 +69,24 @@ describe Spree::Subscription do
       subject.update_attribute(:reorder_on, Date.today)
 
       subject.reorder_on.should eq(Date.today)
-      subject.reorder.should be_true
+      subject.reorder.should be true
       subject.reorder_on.should eq(Date.today + 3.month)
     end
 
     it "should have a valid order" do
-      subject.reorder.should be_true
+      subject.reorder.should be true
       subject.reorders.count.should eq(1)
     end
 
     it "should have a valid order with a billing address" do
-      subject.create_reorder.should be_true
+      subject.create_reorder.should be true
       order = subject.reorders.first
       order.bill_address.should == subject.billing_address  # DD: uses == operator override in Spree::Address
       order.bill_address.id.should_not eq subject.billing_address.id # DD: not the same database record
     end
 
     it "should have a valid order with a shipping address" do
-      subject.create_reorder.should be_true
+      subject.create_reorder.should be true
       order = subject.reorders.first
       order.ship_address.should == subject.shipping_address  # DD: uses == operator override in Spree::Address
       order.ship_address.id.should_not eq subject.shipping_address.id # DD: not the same database record
@@ -100,7 +100,7 @@ describe Spree::Subscription do
 
     it "should have a valid order with a shipping method" do
       subject.create_reorder
-      subject.select_shipping.should be_true
+      subject.select_shipping.should be true
 
       order = subject.reorders.first
       order.shipments.count.should eq(1)
@@ -112,7 +112,7 @@ describe Spree::Subscription do
     it "should have a valid order with a payment method" do
       subject.create_reorder
       subject.select_shipping
-      subject.add_payment.should be_true
+      subject.add_payment.should be true
 
       order = subject.reorders.first
       order.payments.count.should eq(1)
@@ -124,7 +124,7 @@ describe Spree::Subscription do
     it "should have a valid order with a payment source" do
       subject.create_reorder
       subject.select_shipping
-      subject.add_payment.should be_true
+      subject.add_payment.should be true
 
       order = subject.reorders.first
       order.payments.count.should be(1)
@@ -134,14 +134,14 @@ describe Spree::Subscription do
     it "should have a payment" do
       subject.create_reorder
       subject.select_shipping
-      subject.add_payment.should be_true
+      subject.add_payment.should be true
 
       order = subject.reorders.first
       order.payments.should be
     end
 
     it "should have a completed order" do
-      subject.reorder.should be_true
+      subject.reorder.should be true
 
       order = subject.reorders.first
       order.state.should eq("complete")
