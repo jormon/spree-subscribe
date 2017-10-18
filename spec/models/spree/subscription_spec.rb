@@ -2,159 +2,148 @@ require 'spec_helper'
 
 describe Spree::Subscription do
   context "validation" do
-    it "cannot make multiple subscriptions per orderXinterval"
-    it "has many line items"
+    it "cannot make multiple subscriptions per orderXinterval" do
+      order = create :order
+      subscription = create :subscription, order: order
+      expect(subscription).to be_valid
+      expect do
+        # create another subscription for the order with same factory-created
+        # times and times_unit
+        create :subscription, order: order
+      end.to raise_error ActiveRecord::RecordNotUnique
+    end
   end
 
 
   context "that is in 'cart' state" do
-    before(:each) do
-      @sub = create(:subscription)
-      @sub.line_item.order.reload
+    subject { create :subscription }
+
+    it "is in the 'cart' state" do
+      subject.state.should eq("cart")
     end
 
     it "should have no reorder date" do
-      @sub.line_item.should be
-      @sub.state.should eq("cart")
-      @sub.reorder_on.should be_nil
+      subject.reorder_on.should be_nil
     end
 
-    it "should have reorder date that is three months (i.e. subscription interval) from today on activation" do
-      @sub.start
-      @sub.reorder_on.should eq(Date.today + 3.month)
+  end
+
+  context "once activiated" do
+    subject { create :subscription, :activated }
+
+    it "should have a billing address" do
+      subject.billing_address.should be
     end
 
-    it "should have a billing address on activation" do
-      @sub.line_item.order.bill_address.should be
-      @sub.billing_address.should be_nil
-      @sub.start
-      @sub.billing_address.should be
+    it "should have a shipping address" do
+      subject.shipping_address.should be
     end
 
-    it "should have a shipping address on activation" do
-      @sub.line_item.order.shipping_address.should be
-      @sub.shipping_address.should be_nil
-      @sub.start
-      @sub.shipping_address.should be
+    it "should have a ship method" do
+      subject.shipping_method.should be
     end
 
-    it "should have a ship method on activation" do
-      @sub.line_item.order.shipment_for_variant( @sub.line_item.variant ).should be
-      @sub.shipping_method.should be_nil
-      @sub.start
-      @sub.shipping_method.should be
+    it "should have a payment method" do
+      subject.payment_method.should be
     end
 
-    it "should have a payment method on activation" do
-      @sub.payment_method.should be_nil
-      @sub.start
-      @sub.payment_method.should be
+    it "should have a payment source" do
+      subject.source.should be
     end
 
-    it "should have a payment source on activation" do
-      @sub.source.should be_nil
-      @sub.start
-      @sub.source.should be
+    it "should have a user" do
+      subject.user.should be
     end
 
-    it "should have a user on activation" do
-      @sub.user.should be_nil
-      @sub.start
-      @sub.user.should be
+    it "should have reorder date that is three months (i.e. subscription"\
+      "interval) from today on activation" do
+      subject.reorder_on.should eq(Date.today + 3.month)
     end
   end
 
   context "that is ready for reorder" do
-    before(:each) do
-      @sub = create(:subscription_for_reorder)
-      @sub.line_item.order.reload
-      # DD: calling start will set date into future
-      @sub.start
-      @sub.update_attribute(:reorder_on,Date.today)
-    end
+    subject { create :subscription, :activated}
 
     it "should have reorder_on reset" do
-      @sub.reorder_on.should eq(Date.today)
-      @sub.reorder.should be_true
-      @sub.reorder_on.should eq(Date.today + 3.month)
+      # force this back to today
+      subject.update_attribute(:reorder_on, Date.today)
+
+      subject.reorder_on.should eq(Date.today)
+      subject.reorder.should be true
+      subject.reorder_on.should eq(Date.today + 3.month)
     end
 
     it "should have a valid order" do
-      @sub.reorder.should be_true
-      @sub.reorders.count.should eq(1)
+      subject.reorder.should be true
+      subject.reorders.count.should eq(1)
     end
 
     it "should have a valid order with a billing address" do
-      @sub.create_reorder.should be_true
-      order = @sub.reorders.first
-      order.bill_address.should == @sub.billing_address  # DD: uses == operator override in Spree::Address
-      order.bill_address.id.should_not eq @sub.billing_address.id # DD: not the same database record
+      subject.create_reorder.should be true
+      order = subject.reorders.first
+      order.bill_address.should == subject.billing_address  # DD: uses == operator override in Spree::Address
+      order.bill_address.id.should_not eq subject.billing_address.id # DD: not the same database record
     end
 
     it "should have a valid order with a shipping address" do
-      @sub.create_reorder.should be_true
-      order = @sub.reorders.first
-      order.ship_address.should == @sub.shipping_address  # DD: uses == operator override in Spree::Address
-      order.ship_address.id.should_not eq @sub.shipping_address.id # DD: not the same database record
+      subject.create_reorder.should be true
+      order = subject.reorders.first
+      order.ship_address.should == subject.shipping_address  # DD: uses == operator override in Spree::Address
+      order.ship_address.id.should_not eq subject.shipping_address.id # DD: not the same database record
     end
 
     it "should have a valid line item" do
-      @sub.create_reorder
-      @sub.add_subscribed_line_item.should be_true
-      order = @sub.reorders.first
+      subject.create_reorder
+      order = subject.reorders.first
       order.line_items.count.should eq(1)
     end
 
     it "should have a valid order with a shipping method" do
-      @sub.create_reorder
-      @sub.add_subscribed_line_item
-      @sub.select_shipping.should be_true
+      subject.create_reorder
+      subject.select_shipping.should be true
 
-      order = @sub.reorders.first
+      order = subject.reorders.first
       order.shipments.count.should eq(1)
 
       s = order.shipments.first
-      expect(s.shipping_method.code).to eq @sub.shipping_method.code
+      expect(s.shipping_method.code).to eq subject.shipping_method.code
     end
 
     it "should have a valid order with a payment method" do
-      @sub.create_reorder
-      @sub.add_subscribed_line_item
-      @sub.select_shipping
-      @sub.add_payment.should be_true
+      subject.create_reorder
+      subject.select_shipping
+      subject.add_payment.should be true
 
-      order = @sub.reorders.first
+      order = subject.reorders.first
       order.payments.count.should eq(1)
 
       payment = order.payments.first
-      expect(payment.payment_method).to eq @sub.payment_method  # DD: should be same database record
+      expect(payment.payment_method).to eq subject.payment_method  # DD: should be same database record
     end
 
     it "should have a valid order with a payment source" do
-      @sub.create_reorder
-      @sub.add_subscribed_line_item
-      @sub.select_shipping
-      @sub.add_payment.should be_true
+      subject.create_reorder
+      subject.select_shipping
+      subject.add_payment.should be true
 
-      order = @sub.reorders.first
+      order = subject.reorders.first
       order.payments.count.should be(1)
-      expect(order.payments.first.source).to eq @sub.source  # DD: should be same database record
+      expect(order.payments.first.source).to eq subject.source  # DD: should be same database record
     end
 
     it "should have a payment" do
-      @sub.create_reorder
-      @sub.add_subscribed_line_item
-      @sub.select_shipping
-      @sub.add_payment.should be_true
+      subject.create_reorder
+      subject.select_shipping
+      subject.add_payment.should be true
 
-      order = @sub.reorders.first
+      order = subject.reorders.first
       order.payments.should be
     end
 
     it "should have a completed order" do
-      @sub.reorder.should be_true
+      subject.reorder.should be true
 
-      order = @sub.reorders.first
+      order = subject.reorders.first
       order.state.should eq("complete")
       order.completed?.should be
     end

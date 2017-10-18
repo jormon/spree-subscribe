@@ -38,7 +38,7 @@ class Spree::Subscription < Spree::Base
       transition :to => 'cancelled', :from => 'active'
     end
 
-    after_transition :on => :start, :do => :set_checkout_requirements
+    after_transition :on => :start, :do => :copy_order_information
     after_transition :on => :resume, :do => :check_reorder_date
   end
 
@@ -65,14 +65,14 @@ class Spree::Subscription < Spree::Base
         complete_reorder and
         calculate_reorder_date!
 
-    puts result ? " -> Next reorder date: #{self.reorder_on}" : " -> FAILED"
-
+    msg =  result ? " -> Next reorder date: #{self.reorder_on}" : " -> FAILED"
+    Rails.logger.warn msg
     result
   end
 
   def create_reorder
-    puts "[SPREE::SUBSCRIPTION] Reordering subscription: #{id}"
-    puts " -> creating order..."
+    Rails.logger.info "[SPREE::SUBSCRIPTION] Reordering subscription: #{id}"
+    Rails.logger.info " -> creating order..."
 
     self.new_order = Spree::Order.create(
         bill_address: self.billing_address.clone,
@@ -82,9 +82,14 @@ class Spree::Subscription < Spree::Base
         user_id: self.user_id
     )
 
-    self.new_order.store_id = self.line_items.first.order.store_id if self.new_order.respond_to?(:store_id)
+    add_subscribed_line_items
 
-    add_subscribed_line_items and progress and progress # -> address -> delivery
+    if self.new_order.respond_to?(:store_id)
+      self.new_order.store_id = self.line_items.first.order.store_id
+    end
+
+    # -> address -> delivery
+    progress and progress
   end
 
   def add_subscribed_line_items
@@ -103,7 +108,7 @@ class Spree::Subscription < Spree::Base
 
   def select_shipping
     # DD: shipments are created when order state goes to "delivery"
-    puts " -> selecting shipping rate..."
+    Rails.logger.info " -> selecting shipping rate..."
 
     shipment = self.new_order.shipments.first # DD: there should be only one shipment
     rate = shipment.shipping_rates.first{|r| r.shipping_method.id == self.shipping_method.id }
@@ -113,7 +118,7 @@ class Spree::Subscription < Spree::Base
   end
 
   def add_payment
-    puts " -> adding payment..."
+    Rails.logger.info " -> adding payment..."
     payment = self.new_order.payments.build(amount: self.new_order.outstanding_balance)
     payment.source = self.source
     payment.payment_method = self.payment_method
@@ -137,48 +142,37 @@ class Spree::Subscription < Spree::Base
     save
   end
 
-  private
-
-  # DD: if resuming an old subscription
-  def check_reorder_date
-    if reorder_on <= Date.today
-      reorder_on = Date.tomorrow
-      save
-    end
-  end
-
   # DD: assumes interval attributes come in when created/updated in cart
-  def set_checkout_requirements
-    order = self.line_items.first.order
+  def copy_order_information
     # DD: TODO: set quantity?
     calculate_reorder_date!
 
     # auto create user if nil
-    if order.user_id.nil?
+    if self.order.user_id.nil?
       user = Spree::User.create! \
-        email: order.email,
+        email: self.order.email,
         password: Devise.friendly_token,
-        bill_address_id: order.bill_address_id,
-        ship_address_id: order.ship_address_id
-      order.user_id = user.id
-      order.save!
+        bill_address_id: self.order.bill_address_id,
+        ship_address_id: self.order.ship_address_id
+      self.order.user_id = user.id
+      self.order.save!
 
-      # so order.user_id is accurate below
-      order.reload
+      # so self.order.user_id is accurate below
+      self.order.reload
     end
 
-    payment = order.payments.detect do |payment|
+    payment = self.order.payments.detect do |payment|
       payment.state == "completed"
     end
 
     update_attributes(
-        :billing_address_id => order.bill_address_id,
-        :shipping_address_id => order.ship_address_id,
-        :shipping_method_id => order.shipments.first.shipping_method.id,
+        :billing_address_id => self.order.bill_address_id,
+        :shipping_address_id => self.order.ship_address_id,
+        :shipping_method_id => self.order.shipments.first.shipping_method.id,
         :payment_method_id => payment.payment_method_id,
         :source_id => payment.source_id,
         :source_type => payment.source_type,
-        :user_id => order.user_id
+        :user_id => self.order.user_id
     )
   end
 
@@ -195,9 +189,10 @@ class Spree::Subscription < Spree::Base
     result = self.new_order.next
     success = !!result && current_state != new_order_state
     unless success
-      puts " !! Order progression failed. Status still '#{new_order_state}'"
-      puts "New Order: #{new_order.id}"
-      puts "Errors: #{new_order.errors.messages}"
+      Rails.logger.error " !! Order progression failed. Status still"\
+        "'#{new_order_state}'"
+      Rails.logger.error "New Order: #{new_order.id}"
+      Rails.logger.error "Errors: #{new_order.errors.messages}"
     end
     success
   end

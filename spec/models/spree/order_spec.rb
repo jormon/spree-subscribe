@@ -1,9 +1,35 @@
 require "spec_helper"
 
 describe Spree::Order do
-  describe "prune_subscriptions" do
-    it "it removes un-referenced subscriptions"
-    it "keeps referenced subscriptions"
+  describe "#prune_subscriptions" do
+    let!(:order) { create :complex_subscription_order }
+    let(:subscriptions) { order.subscriptions }
+    let(:single_li_subscription) do
+      subscriptions.detect { |s| s.line_items.count == 1 }
+    end
+    let(:double_li_subscription) do
+      subscriptions.detect { |s| s.line_items.count == 2 }
+    end
+
+    context "removing the single line item" do
+      before(:each) { single_li_subscription.line_items.first.destroy }
+
+      it "removes the single subscription" do
+        expect(Spree::Subscription.where(id: single_li_subscription.id)).
+          to_not be_present
+      end
+      it "keeps the double subscription" do
+        expect(order.subscriptions.reload).to eq [double_li_subscription]
+      end
+    end
+
+    context "removing one of the double line items" do
+      before(:each) { double_li_subscription.line_items.first.destroy }
+
+      it "keeps both subscriptions" do
+        expect(order.subscriptions.count).to eq 2
+      end
+    end
   end
 
   describe "#subscription?" do
