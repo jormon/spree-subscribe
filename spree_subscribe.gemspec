@@ -24,6 +24,9 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'database_cleaner'
   s.add_development_dependency 'factory_girl', '~> 4.2'
   s.add_development_dependency 'ffaker'
+  # need to set max rake see: https://bit.ly/2zki0iP
+  # for rake test_app task
+  s.add_development_dependency 'rake',  '< 11.0'
   s.add_development_dependency 'rspec-rails',  '~> 2.13'
   s.add_development_dependency 'sass-rails'
   s.add_development_dependency 'selenium-webdriver'
