@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/onedanshow/spree-subscribe.png)](https://travis-ci.org/onedanshow/spree-subscribe)
+[![Build Status](https://travis-ci.org/jormon/spree-subscribe.svg?branch=spree-2-4)](https://travis-ci.org/jormon/spree-subscribe)
 [![Code Climate](https://codeclimate.com/github/onedanshow/spree-subscribe.png)](https://codeclimate.com/github/onedanshow/spree-subscribe)
 
 **This extension is ready for beta testing.**
