@@ -9,6 +9,7 @@
           <th class="subscription-price"><%= t(:price, :scope => :subscribe) %></th>
           <th class="subscription-interval"><%= t(:interval, :scope => :subscribe) %></th>
           <th class="subscription-reorder-date"><%= t(:reorder_on, :scope => :subscribe) %></th>
+          <th class="subscription-last-recurrence"><%= t(:last_recurrence, :scope => :subscribe) %></th>
           <th class="subscription-status"><%= t(:state, :scope => :subscribe) %></th>
           <th class="subscription-actions">&nbsp;</th>
         </tr>
@@ -31,6 +32,14 @@
           <td class="subscription-reorder-date">
             <% if sub.active? %>
               <%= l sub.reorder_on.to_date %>
+            <% else %>
+              -
+            <% end %>
+          </td>
+          <td class="subscription-last-recurrence">
+            <% last_order = sub.reorders.complete.order("completed_at DESC").first %>
+            <% if last_order.present? %>
+              <%= link_to last_order.number, order_url(last_order) %>
             <% else %>
               -
             <% end %>
