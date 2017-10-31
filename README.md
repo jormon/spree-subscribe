@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/jormon/spree-subscribe.svg?branch=spree-2-4)](https://travis-ci.org/jormon/spree-subscribe)
-[![Code Climate](https://codeclimate.com/github/onedanshow/spree-subscribe.png)](https://codeclimate.com/github/onedanshow/spree-subscribe)
-
+[![Maintainability](https://api.codeclimate.com/v1/badges/2bf174ca887e367a59e0/maintainability)](https://codeclimate.com/github/jormon/spree-subscribe/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/2bf174ca887e367a59e0/test_coverage)](https://codeclimate.com/github/jormon/spree-subscribe/test_coverage)
 **This extension is ready for beta testing.**
 
 SpreeSubscribe
