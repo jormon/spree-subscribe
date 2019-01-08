@@ -18,7 +18,9 @@
       <% end %>
       <% if @product.variants.count < 2 && (@product.subscribed_price || @product.try(:wholesale_subscription_price)) %>
         <% price_difference = subscription_price_difference_for variant: (@product.variants.first || @product.master) %>
-        <span class="price-saved">You save <%= price_difference.to_html %>!</span>
+        <% if price_difference.cents > 0 %>
+          <span class="price-saved">You save <%= price_difference.to_html %>!</span>
+        <% end %>
       <% end %>
     </div>
   </div>
